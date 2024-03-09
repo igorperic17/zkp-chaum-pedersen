@@ -1,0 +1,54 @@
+syntax = "proto3";
+package zkp_auth;
+
+/* 
+client registers by sending y1 and y2 to the server
+y1 = g^x mod p
+y2 = h^x mod p
+*/
+message RegisterRequest {
+    string name = 1;
+    bytes y1 = 2;
+    bytes y2 = 3;
+}
+
+/* response has no payload */
+message RegisterResponse {
+}
+
+/* 
+client asks for a challenge (a.k.a. login request)
+r1 = g^k mod p
+r2 = h^k mod p
+*/
+message AuthenticationChallengeRequest {
+    string user = 1;
+    bytes r1 = 2;
+    bytes r2 = 3;
+}
+
+/* the server responds with a challenge C (random BigInt) */
+message AuthenticationChallengeResponse {
+    string auth_id = 1;
+    bytes c = 2;
+}
+
+
+/* 
+client sends the challenge solution 
+S = K - C * X to the server 
+*/
+message AuthenticationAnswerRequest {
+    string auth_id = 1;
+    bytes s = 2;
+}
+
+message AuthenticationAnswerResponse {
+    string session_id = 1;
+}
+
+service Auth {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc CreateAuthenticationChallenge(AuthenticationChallengeRequest) returns (AuthenticationChallengeResponse);
+    rpc VerifyAuthentication(AuthenticationAnswerRequest) returns (AuthenticationAnswerResponse);
+}
