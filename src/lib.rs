@@ -1,4 +1,5 @@
-use num_bigint::BigUint;
+use num_bigint::{BigUint, RandBigInt};
+use rand;
 
 // g^x mod p
 pub fn exponentiate(n: &BigUint, exponent: &BigUint, modulus: &BigUint) -> BigUint {
@@ -19,6 +20,11 @@ pub fn verify(r1: &BigUint, r2: &BigUint, y1: &BigUint, y2: &BigUint, g: &BigUin
     let cond1 = *r1 == (g.modpow(s, p) * y1.modpow(c, p)).modpow(&BigUint::from(1u32), p);
     let cond2 = *r2 == (h.modpow(s, p) * y2.modpow(c, p)).modpow(&BigUint::from(1u32), p);
     cond1 && cond2
+}
+
+pub fn generate_random_below(bound: &BigUint) -> BigUint {
+    let mut rng = rand::thread_rng();
+    rng.gen_biguint_below(bound)
 }
 
 
@@ -61,5 +67,33 @@ mod test {
         let result = verify(&r1, &r2, &y1, &y2, &g, &h, &c, &s_fake, &p);
         assert!(!result);
 
+    }
+
+
+    #[test]
+    fn test_toy_example_with_rand() {
+        let g = BigUint::from(4u32);
+        let h = BigUint::from(9u32);
+        let p = BigUint::from(23u32);
+        let q = BigUint::from(11u32);
+
+        let x = BigUint::from(6u32);
+        let k = generate_random_below(&q);
+
+        let c = generate_random_below(&q);
+
+
+        let y1 = exponentiate(&g, &x, &p);
+        let y2 = exponentiate(&h, &x, &p);
+        assert_eq!(y1, BigUint::from(2u32));
+        assert_eq!(y2, BigUint::from(3u32));
+
+        let r1 = exponentiate(&g, &k, &p);
+        let r2 = exponentiate(&h, &k, &p);
+
+        let s = solve(&k, &c, &x, &q);
+
+        let result = verify(&r1, &r2, &y1, &y2, &g, &h, &c, &s, &p);
+        assert!(result);
     }
 }
